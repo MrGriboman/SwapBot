@@ -6,3 +6,5 @@ offers.db
 offers.sqbpro
 pyvenv.cfg
 .env
+__pycache__
+.idea

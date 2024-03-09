@@ -32,8 +32,21 @@ async def add_user(con, user_id, user_name):
     await cur.close()
 
 
-async def add_offer(con, offer_id, giver_id):
+async def add_offer(con, offer_id, giver_id, description):
     cur = await con.cursor()
-    await cur.execute(f"INSERT INTO offers (offer_id, giver_id) VALUES ({offer_id}, {giver_id})")
+    await cur.execute(f"INSERT INTO offers (offer_id, giver_id, description) VALUES ({offer_id}, {giver_id}, '{description}')")
     await con.commit()
     await cur.close()
+
+
+async def add_book(con, offer_id, booker_id, time):
+    cur = await con.cursor()
+    await cur.execute(f"INSERT INTO books (offer_id, booker_id, time) VALUES ({offer_id}, {booker_id}, {time})")
+    await con.commit()
+    await cur.close()
+
+
+async def get_offers_list(con, giver_id):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT description FROM offers WHERE giver_id = {giver_id}")
+    return res

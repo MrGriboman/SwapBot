@@ -1,6 +1,7 @@
 from aiogram import types, F, Router, Bot
 from aiogram.types import Message
 from aiogram.filters import Command
+import datetime
 
 import database as db
 
@@ -10,6 +11,14 @@ router = Router()
 @router.message(Command("hello"))
 async def start_handler(message: Message):
     await message.answer(f'Hi there, {message.from_user.first_name}!')
+
+
+@router.message(Command("book"))
+async def book_handler(msg: Message):
+    print(int(msg.date.strftime("%Y%m%d%H%M%S")))
+    con = await db.connect_to_db()
+    await db.add_book(con, msg.reply_to_message.message_id, msg.from_user.id, int(msg.date.strftime("%Y%m%d%H%M%S")))
+    await msg.reply("Remembered your booking!")
 
 
 @router.message(F.text.lower() == "да")
@@ -32,8 +41,19 @@ async def help_handler(message: Message):
 @router.message(Command("offer"))
 async def offer_handler(msg: Message):
     con = await db.connect_to_db()
-    await db.add_offer(con, msg.message_id, msg.from_user.id)
+    await db.add_offer(con, msg.message_id, msg.from_user.id, msg.text.replace("/offer", ''))
     await msg.reply("Added your offer to my database!")
+
+
+@router.message(Command("mylist"))
+async def list_handler(msg: Message, bot: Bot):
+    con = await db.connect_to_db()
+    res = await db.get_offers_list(con, msg.from_user.id)
+    offers = await res.fetchall()
+    reply = "Here's the list of your offers!\n"
+    for i, offer in enumerate(offers):
+        reply += f"{i+1}) {offer[0]}\n"
+    await bot.send_message(msg.from_user.id, reply)
 
 
 @router.message(Command("drzj"))
