@@ -1,6 +1,6 @@
 from aiogram import types, F, Router, Bot
 from aiogram.types import Message
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 import datetime
 
 import database as db
@@ -14,11 +14,21 @@ async def start_handler(message: Message):
 
 
 @router.message(Command("book"))
-async def book_handler(msg: Message):
-    print(int(msg.date.strftime("%Y%m%d%H%M%S")))
+async def book_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
     await db.add_book(con, msg.reply_to_message.message_id, msg.from_user.id, int(msg.date.strftime("%Y%m%d%H%M%S")))
     await msg.reply("Remembered your booking!")
+    res = await db.get_first_for_offer(con, msg.reply_to_message.message_id)
+    first_in_queue = await res.fetchall()
+    if first_in_queue[0][0] == msg.from_user.id:
+        await bot.send_message(
+            msg.from_user.id,
+            f"You're the first in the queue, contact {msg.reply_to_message.from_user.first_name}!"
+        )
+        await bot.send_message(
+            msg.reply_to_message.from_user.id,
+            f"{msg.from_user.first_name} is the first in the queue, contact them!"
+        )
 
 
 @router.message(F.text.lower() == "да")
@@ -26,10 +36,11 @@ async def da_handler(msg: Message):
     await msg.reply("Пизда")
 
 
-@router.message(Command("register"))
+@router.message(Command("start"))
 async def register_handler(msg: Message):
     con = await db.connect_to_db()
     await db.add_user(con, msg.from_user.id, msg.from_user.first_name)
+    await msg.answer("Glad to see you!")
 
 
 @router.message(Command("help"))
@@ -52,7 +63,7 @@ async def list_handler(msg: Message, bot: Bot):
     offers = await res.fetchall()
     reply = "Here's the list of your offers!\n"
     for i, offer in enumerate(offers):
-        reply += f"{i+1}) {offer[0]}\n"
+        reply += f"{i+1}) {offer[0][0]}\n"
     await bot.send_message(msg.from_user.id, reply)
 
 
