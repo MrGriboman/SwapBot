@@ -8,3 +8,4 @@ pyvenv.cfg
 .env
 __pycache__
 .idea
+.git

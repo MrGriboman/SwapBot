@@ -48,7 +48,7 @@ async def add_book(con, offer_id, booker_id, time):
 
 async def get_offers_list(con, giver_id):
     cur = await con.cursor()
-    res = await cur.execute(f"SELECT description FROM offers WHERE giver_id = {giver_id}")
+    res = await cur.execute(f"SELECT description, offer_id FROM offers WHERE giver_id = {giver_id}")
     return res
 
 

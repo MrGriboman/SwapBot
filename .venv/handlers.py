@@ -1,7 +1,6 @@
-from aiogram import types, F, Router, Bot
+from aiogram import F, Router, Bot
 from aiogram.types import Message
-from aiogram.filters import Command, CommandStart
-import datetime
+from aiogram.filters import Command
 
 import database as db
 
@@ -15,6 +14,12 @@ async def start_handler(message: Message):
 
 @router.message(Command("book"))
 async def book_handler(msg: Message, bot: Bot):
+    if msg.reply_to_message is None:
+        await msg.reply("I don\'t know what offer you're referring to, this command must be a reply")
+        return
+    if msg.reply_to_message.from_user.id == msg.from_user.id:
+        await msg.reply("You can\'t book your own offer!")
+        return
     con = await db.connect_to_db()
     await db.add_book(con, msg.reply_to_message.message_id, msg.from_user.id, int(msg.date.strftime("%Y%m%d%H%M%S")))
     await msg.reply("Remembered your booking!")
@@ -63,7 +68,7 @@ async def list_handler(msg: Message, bot: Bot):
     offers = await res.fetchall()
     reply = "Here's the list of your offers!\n"
     for i, offer in enumerate(offers):
-        reply += f"{i+1}) {offer[0][0]}\n"
+        reply += f"{i+1}) {offer[0]}, id={offer[1]}\n"
     await bot.send_message(msg.from_user.id, reply)
 
 
