@@ -49,6 +49,12 @@ async def get_offers_list(con, giver_id):
     return res
 
 
+async def offer_by_id(con, message_id):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT offer_id FROM offers WHERE offer_id = {message_id}")
+    return res
+
+
 async def get_first_for_offer(con, offer_id):
     cur = await con.cursor()
     res = await cur.execute(f"SELECT booker_id FROM books WHERE offer_id = {offer_id} ORDER BY time LIMIT 1")

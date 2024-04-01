@@ -4,6 +4,7 @@ from aiogram.filters import Command
 
 import database as db
 import keyboards as kb
+import utils
 
 router = Router()
 
@@ -18,10 +19,15 @@ async def book_handler(msg: Message, bot: Bot):
     if msg.reply_to_message is None:
         await msg.reply("Эта команда должна быть ответом на объявление")
         return
-    if msg.reply_to_message.from_user.id == msg.from_user.id:
+    '''if msg.reply_to_message.from_user.id == msg.from_user.id:
         await msg.reply("Вы не можете забронировать собственное объявление")
-        return
+        return'''
     con = await db.connect_to_db()
+    the_offer = await db.offer_by_id(con, msg.reply_to_message.message_id)
+    the_offer = await the_offer.fetchall()
+    if not the_offer:
+        await msg.reply("Это сообщение не объявление!")
+        return
     await db.add_book(con, msg.reply_to_message.message_id, msg.from_user.id, int(msg.date.strftime("%Y%m%d%H%M%S")))
     await msg.reply("Запомнил вашу бронь")
     res = await db.get_first_for_offer(con, msg.reply_to_message.message_id)
@@ -29,11 +35,11 @@ async def book_handler(msg: Message, bot: Bot):
     if first_in_queue[0][0] == msg.from_user.id:
         await bot.send_message(
             msg.from_user.id,
-            f"Вы первый в очереди! Свяжитесь с {msg.reply_to_message.from_user.first_name}!"
+            f"Вы первый в очереди! Свяжитесь с {utils.resolve_user_name(msg.reply_to_message.from_user)}!"
         )
         await bot.send_message(
             msg.reply_to_message.from_user.id,
-            f"{msg.from_user.first_name} первый в очереди, свяжитесь с ним"
+            f"{utils.resolve_user_name(msg.from_user)} первый в очереди, свяжитесь с ним"
         )
 
 
@@ -58,7 +64,10 @@ async def help_handler(message: Message):
 @router.message(Command("offer"))
 async def offer_handler(msg: Message):
     con = await db.connect_to_db()
-    await db.add_offer(con, msg.message_id, msg.from_user.id, msg.text.replace("/offer", ''))
+    if msg.photo is None:
+        await db.add_offer(con, msg.message_id, msg.from_user.id, msg.text.replace("/offer", ''))
+    else:
+        await db.add_offer(con, msg.message_id, msg.from_user.id, msg.caption.replace("/offer", ''))
     await msg.reply("Добавил ваше объявление в базу данных!")
 
 
