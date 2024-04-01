@@ -9,19 +9,16 @@ name = os.getenv("db_name")
 
 
 async def connect_to_db():
+    print('connect')
     con = await aiosqlite.connect(name)
-    '''await cur.execute('CREATE TABLE if not exists "users" ("ID"	INTEGER NOT NULL UNIQUE, "Name"	TEXT NOT NULL, '
-                      'PRIMARY KEY("ID"))')
+    cur = await con.cursor()
+    await cur.execute('CREATE TABLE if not exists "users" ("ID"	INTEGER NOT NULL UNIQUE, "Name"	TEXT NOT NULL, PRIMARY KEY("ID"))')
 
-    await cur.execute('CREATE TABLE if not exists "offers" ("offer_id"	INTEGER NOT NULL UNIQUE, "giver_id"	INTEGER '
-                      'NOT NULL'
-                      'UNIQUE,PRIMARY KEY("offer_id"),FOREIGN KEY("giver_id") REFERENCES "users"("ID"))')
+    await cur.execute('CREATE TABLE if not exists "offers" ("offer_id"	INTEGER NOT NULL UNIQUE, "giver_id"	INTEGER NOT NULL UNIQUE, "description" TEXT, PRIMARY KEY("offer_id"),FOREIGN KEY("giver_id") REFERENCES "users"("ID"))')
 
-    await cur.execute('CREATE TABLE if not exists "books" ("offer"	INTEGER NOT NULL UNIQUE,"booker_id"	INTEGER NOT '
-                      'NULL UNIQUE,"time"	INTEGER NOT NULL,PRIMARY KEY("offer","booker_id"),FOREIGN KEY("offer") '
-                      'REFERENCES "offers"("offer_id"),FOREIGN KEY("booker_id") REFERENCES "users"("ID"))')'''
+    await cur.execute('CREATE TABLE if not exists "books" ("offer"	INTEGER NOT NULL UNIQUE,"booker_id"	INTEGER NOT NULL UNIQUE,"time"	INTEGER NOT NULL,PRIMARY KEY("offer","booker_id"),FOREIGN KEY("offer") REFERENCES "offers"("offer_id"),FOREIGN KEY("booker_id") REFERENCES "users"("ID"))')
 
-    # await con.commit()
+    await con.commit()
     return con
 
 
