@@ -59,3 +59,9 @@ async def get_first_for_offer(con, offer_id):
     cur = await con.cursor()
     res = await cur.execute(f"SELECT booker_id FROM books WHERE offer_id = {offer_id} ORDER BY time LIMIT 1")
     return res
+
+
+async def get_books_list(con, user_id):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT o.description from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {user_id}")
+    return res

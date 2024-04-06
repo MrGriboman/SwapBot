@@ -8,8 +8,8 @@ from aiogram.types import(
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Show my offers"),
-            KeyboardButton(text="Show my books")
+            KeyboardButton(text="Покажи мои объявления"),
+            KeyboardButton(text="Покажи мои брони")
         ]
     ],
     resize_keyboard=True

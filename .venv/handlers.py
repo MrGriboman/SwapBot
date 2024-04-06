@@ -43,11 +43,6 @@ async def book_handler(msg: Message, bot: Bot):
         )
 
 
-@router.message(F.text.lower() == "да")
-async def da_handler(msg: Message):
-    await msg.reply("Пизда")
-
-
 @router.message(Command("start"))
 async def register_handler(msg: Message):
     con = await db.connect_to_db()
@@ -71,7 +66,7 @@ async def offer_handler(msg: Message):
     await msg.reply("Добавил ваше объявление в базу данных!")
 
 
-@router.message(Command("mylist"))
+@router.message(F.text.lower() == 'покажи мои объявления')
 async def list_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
     res = await db.get_offers_list(con, msg.from_user.id)
@@ -82,6 +77,16 @@ async def list_handler(msg: Message, bot: Bot):
     await bot.send_message(msg.from_user.id, reply)
 
 
+@router.message(F.text.lower() == 'покажи мои брони')
+async def boklist_handler(msg: Message, bot: Bot):
+    con = await db.connect_to_db()
+    res = await db.get_books_list(con, msg.from_user.id)
+    books = await res.fetchall()
+    reply = "Вот список ваших броней!\n"
+    for i, book in enumerate(books):
+        reply += f"{i + 1}) {book[0]}\n"
+    await bot.send_message(msg.from_user.id, reply)
+
 @router.message(Command("drzj"))
 async def dance_handler(msg: Message):
     await msg.answer_sticker(sticker='CAACAgIAAxkBAAELoy1l6p6q6VoUqY5lHx9YgUK0vodpNgACYygAApehcEghrDYNSgAB7Sc0BA')
@@ -90,6 +95,6 @@ async def dance_handler(msg: Message):
 @router.message()
 async def general_handler(msg: Message):
     if msg.chat.type == "private":
-        await msg.answer("What do you want?", reply_markup=kb.main_kb)
+        await msg.answer("Чем могу быть полезен?", reply_markup=kb.main_kb)
 
 
