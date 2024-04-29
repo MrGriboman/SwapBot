@@ -43,9 +43,9 @@ async def add_book(con, offer_id, booker_id, time):
     await cur.close()
 
 
-async def get_offers_list(con, giver_id):
+async def get_offers_list(con, giver_id, offset):
     cur = await con.cursor()
-    res = await cur.execute(f"SELECT description, offer_id FROM offers WHERE giver_id = {giver_id}")
+    res = await cur.execute(f"SELECT description, offer_id FROM offers WHERE giver_id = {giver_id} LIMIT 10 OFFSET {offset}")
     return res
 
 
@@ -61,7 +61,7 @@ async def get_first_for_offer(con, offer_id):
     return res
 
 
-async def get_books_list(con, user_id):
+async def get_books_list(con, user_id, offset):
     cur = await con.cursor()
-    res = await cur.execute(f"SELECT o.description from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {user_id}")
+    res = await cur.execute(f"SELECT o.description, b.offer_id, b.booker_id from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {user_id} LIMIT 10 OFFSET {offset}")
     return res

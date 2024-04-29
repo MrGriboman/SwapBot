@@ -69,23 +69,22 @@ async def offer_handler(msg: Message):
 @router.message(F.text.lower() == 'покажи мои объявления')
 async def list_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
-    res = await db.get_offers_list(con, msg.from_user.id)
+    res = await db.get_offers_list(con, msg.from_user.id, 0)
     offers = await res.fetchall()
     reply = "Вот список ваших объявлений!\n"
-    for i, offer in enumerate(offers):
-        reply += f"{i+1}) {offer[0]}, id={offer[1]}\n"
-    await bot.send_message(msg.from_user.id, reply)
+    offers_kb = kb.offers_kb(offers).as_markup()
+    await bot.send_message(msg.from_user.id, reply, reply_markup=offers_kb)
 
 
 @router.message(F.text.lower() == 'покажи мои брони')
 async def boklist_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
-    res = await db.get_books_list(con, msg.from_user.id)
+    res = await db.get_books_list(con, msg.from_user.id, 0)
     books = await res.fetchall()
     reply = "Вот список ваших броней!\n"
-    for i, book in enumerate(books):
-        reply += f"{i + 1}) {book[0]}\n"
-    await bot.send_message(msg.from_user.id, reply)
+    books_kb = kb.books_kb(books, 0).as_markup()
+    await bot.send_message(msg.from_user.id, reply, reply_markup=books_kb)
+
 
 @router.message(Command("drzj"))
 async def dance_handler(msg: Message):
