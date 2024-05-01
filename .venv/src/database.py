@@ -63,5 +63,18 @@ async def get_first_for_offer(con, offer_id):
 
 async def get_books_list(con, user_id, offset):
     cur = await con.cursor()
-    res = await cur.execute(f"SELECT o.description, b.offer_id, b.booker_id from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {user_id} LIMIT 10 OFFSET {offset}")
+    res = await cur.execute(f"SELECT o.description, b.offer_id, b.booker_id from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {user_id} LIMIT 1 OFFSET {offset}")
     return res
+
+
+async def get_book(con, offer, booker):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT o.description from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {booker} AND b.offer_id = {offer}")
+    return res
+
+
+async def delete_book(con, offer, booker):
+    cur = await con.cursor()
+    await cur.execute(f"DELETE FROM books WHERE offer_id={offer} AND booker_id={booker}")
+    await con.commit()
+    await cur.close()

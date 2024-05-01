@@ -1,4 +1,4 @@
-from aiogram.types import(
+from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
     InlineKeyboardMarkup,
@@ -21,12 +21,13 @@ def books_kb(books, offset):
     builder = InlineKeyboardBuilder()
     for book in books:
         builder.row(InlineKeyboardButton(
-            text=book[0],
-            callback_data=str(book[1]) + '_' + str(book[2]))
+            text='Удалить',
+            callback_data='booklist_delete_' + str(book[1]) + '_' + str(book[2])
+            )
         )
     builder.row(
-        InlineKeyboardButton(text='Назад', callback_data='goback_book_' + str(offset)),
-        InlineKeyboardButton(text='Вперёд', callback_data='goforward_book_' + str(offset))
+        InlineKeyboardButton(text='Назад', callback_data='booklist_goback_' + str(offset)),
+        InlineKeyboardButton(text='Вперёд', callback_data='booklist_goforward_' + str(offset))
     )
     return builder
 

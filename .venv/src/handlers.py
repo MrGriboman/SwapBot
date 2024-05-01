@@ -35,11 +35,11 @@ async def book_handler(msg: Message, bot: Bot):
     if first_in_queue[0][0] == msg.from_user.id:
         await bot.send_message(
             msg.from_user.id,
-            f"Вы первый в очереди! Свяжитесь с {utils.resolve_user_name(msg.reply_to_message.from_user)}!"
+            f"Вы первый в очереди! Свяжитесь с {await utils.resolve_user_name(msg.reply_to_message.from_user)}!"
         )
         await bot.send_message(
             msg.reply_to_message.from_user.id,
-            f"{utils.resolve_user_name(msg.from_user)} первый в очереди, свяжитесь с ним"
+            f"{await utils.resolve_user_name(msg.from_user)} первый в очереди, свяжитесь с ним"
         )
 
 
@@ -80,8 +80,9 @@ async def list_handler(msg: Message, bot: Bot):
 async def boklist_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
     res = await db.get_books_list(con, msg.from_user.id, 0)
+    print(msg.from_user.id)
     books = await res.fetchall()
-    reply = "Вот список ваших броней!\n"
+    reply = books[0][0]
     books_kb = kb.books_kb(books, 0).as_markup()
     await bot.send_message(msg.from_user.id, reply, reply_markup=books_kb)
 
@@ -89,6 +90,40 @@ async def boklist_handler(msg: Message, bot: Bot):
 @router.message(Command("drzj"))
 async def dance_handler(msg: Message):
     await msg.answer_sticker(sticker='CAACAgIAAxkBAAELoy1l6p6q6VoUqY5lHx9YgUK0vodpNgACYygAApehcEghrDYNSgAB7Sc0BA')
+
+
+@router.callback_query(F.data.startswith('booklist'))
+async def booklist_callback(callback: CallbackQuery):
+    command = callback.data.split('_')
+    action = command[1]
+    if action == 'goforward':
+        value = command[2]
+        con = await db.connect_to_db()
+        res = await db.get_books_list(con, callback.from_user.id, offset := int(value) + 1)
+        books = await res.fetchall()
+        print(books)
+        books_kb = kb.books_kb(books, offset).as_markup()
+        await callback.message.edit_text(books[0][0])
+        await callback.message.edit_reply_markup(reply_markup=books_kb)
+    if action == 'goback':
+        value = command[2]
+        con = await db.connect_to_db()
+        res = await db.get_books_list(con, callback.from_user.id, offset := int(value) - 1)
+        print(callback.from_user.id)
+        books = await res.fetchall()
+        books_kb = kb.books_kb(books, offset).as_markup()
+        await callback.message.edit_text(books[0][0])
+        await callback.message.edit_reply_markup(reply_markup=books_kb)
+    if action == 'delete':
+        offer, booker = command[2], command[3]
+        con = await db.connect_to_db()
+        await db.delete_book(con, offer, booker)
+        res = await db.get_books_list(con, callback.from_user.id, 0)
+        books = await res.fetchall()
+        books_kb = kb.books_kb(books, 0).as_markup()
+        await callback.message.edit_text(books[0][0])
+        await callback.message.edit_reply_markup(reply_markup=books_kb)
+    await callback.answer()
 
 
 @router.message()
