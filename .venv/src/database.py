@@ -12,7 +12,7 @@ async def connect_to_db():
     print('connect')
     con = await aiosqlite.connect(name)
     cur = await con.cursor()
-    await cur.execute('CREATE TABLE if not exists "users" ("ID"	INTEGER NOT NULL UNIQUE, "Name"	TEXT NOT NULL, PRIMARY KEY("ID"))')
+    await cur.execute('CREATE TABLE if not exists "users" ("ID"	INTEGER NOT NULL UNIQUE, "Name"	TEXT NOT NULL, Username TEXT, PRIMARY KEY("ID"))')
 
     await cur.execute('CREATE TABLE if not exists "offers" ("offer_id"	INTEGER NOT NULL UNIQUE, "giver_id"	INTEGER NOT NULL UNIQUE, "description" TEXT, PRIMARY KEY("offer_id"),FOREIGN KEY("giver_id") REFERENCES "users"("ID"))')
 
@@ -22,9 +22,9 @@ async def connect_to_db():
     return con
 
 
-async def add_user(con, user_id, user_name):
+async def add_user(con, user_id, name, username):
     cur = await con.cursor()
-    await cur.execute(f"INSERT INTO users (ID, Name) VALUES ({user_id}, '{user_name}')")
+    await cur.execute(f"INSERT INTO users (ID, Name, Username) VALUES ({user_id}, '{name}', '{username}')")
     await con.commit()
     await cur.close()
 
@@ -45,7 +45,7 @@ async def add_book(con, offer_id, booker_id, time):
 
 async def get_offers_list(con, giver_id, offset):
     cur = await con.cursor()
-    res = await cur.execute(f"SELECT description, offer_id FROM offers WHERE giver_id = {giver_id} LIMIT 10 OFFSET {offset}")
+    res = await cur.execute(f"SELECT description, offer_id FROM offers WHERE giver_id = {giver_id} LIMIT 1 OFFSET {offset}")
     return res
 
 
@@ -67,14 +67,33 @@ async def get_books_list(con, user_id, offset):
     return res
 
 
+async def get_books_by_offer(con, offer, offset):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT o.description, b.offer_id, b.booker_id from offers o JOIN books b on o.offer_id = b.offer_id WHERE o.offer_id={offer} LIMIT 1 OFFSET {offset}")
+    return res
+
+
 async def get_book(con, offer, booker):
     cur = await con.cursor()
     res = await cur.execute(f"SELECT o.description from offers o JOIN books b on o.offer_id = b.offer_id WHERE b.booker_id = {booker} AND b.offer_id = {offer}")
     return res
 
 
+async def get_user_by_id(con, id):
+    cur = await con.cursor()
+    res = await cur.execute(f"SELECT * FROM Users WHERE ID = {id}")
+    return res
+
+
 async def delete_book(con, offer, booker):
     cur = await con.cursor()
     await cur.execute(f"DELETE FROM books WHERE offer_id={offer} AND booker_id={booker}")
+    await con.commit()
+    await cur.close()
+
+
+async def delete_offer(con, offer):
+    cur = await con.cursor()
+    await cur.execute(f"DELETE FROM offers WHERE offer_id={offer}")
     await con.commit()
     await cur.close()

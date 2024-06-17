@@ -46,7 +46,8 @@ async def book_handler(msg: Message, bot: Bot):
 @router.message(Command("start"))
 async def register_handler(msg: Message):
     con = await db.connect_to_db()
-    await db.add_user(con, msg.from_user.id, msg.from_user.first_name)
+    username = msg.from_user.username if msg.from_user.username is not None else None
+    await db.add_user(con, msg.from_user.id, msg.from_user.first_name, username)
     await msg.answer("Рад вас видеть")
 
 
@@ -71,8 +72,8 @@ async def list_handler(msg: Message, bot: Bot):
     con = await db.connect_to_db()
     res = await db.get_offers_list(con, msg.from_user.id, 0)
     offers = await res.fetchall()
-    reply = "Вот список ваших объявлений!\n"
-    offers_kb = kb.offers_kb(offers).as_markup()
+    reply = offers[0][0]
+    offers_kb = kb.offers_kb(offers, 0).as_markup()
     await bot.send_message(msg.from_user.id, reply, reply_markup=offers_kb)
 
 
@@ -126,9 +127,51 @@ async def booklist_callback(callback: CallbackQuery):
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith('offerlist'))
+async def offerlist_callback(callback: CallbackQuery):
+    command = callback.data.split('_')
+    action = command[1]
+    if action == 'goforward':
+        value = command[2]
+        con = await db.connect_to_db()
+        res = await db.get_offers_list(con, callback.from_user.id, offset := int(value) + 1)
+        offers = await res.fetchall()
+        offers_kb = kb.offers_kb(offers, offset).as_markup()
+        await callback.message.edit_text(offers[0][0])
+        await callback.message.edit_reply_markup(reply_markup=offers_kb)
+    if action == 'goback':
+        value = command[2]
+        con = await db.connect_to_db()
+        res = await db.get_offers_list(con, callback.from_user.id, offset := int(value) - 1)
+        offers = await res.fetchall()
+        offers_kb = kb.offers_kb(offers, offset).as_markup()
+        await callback.message.edit_text(offers[0][0])
+        await callback.message.edit_reply_markup(reply_markup=offers_kb)
+    if action == 'delete':
+        offer = command[2]
+        con = await db.connect_to_db()
+        await db.delete_offer(con, offer)
+        res = await db.get_offers_list(con, callback.from_user.id, 0)
+        offers = await res.fetchall()
+        offers_kb = kb.offers_kb(offers, 0).as_markup()
+        await callback.message.edit_text(offers[0][0])
+        await callback.message.edit_reply_markup(reply_markup=offers_kb)
+    if action == 'books':
+        offer = command[2]
+        con = await db.connect_to_db()
+        res = await db.get_books_by_offer(con, offer, 0)
+        books = await res.fetchall()
+        books_kb = kb.books_kb(books, 0).as_markup()
+        print(books)
+        booker = await db.get_user_by_id(con, books[0][2])
+        booker = await booker.fetchall()
+        booker_name, booker_username = booker[0][1], booker[0][2]
+        await callback.message.edit_text(f'Забронировавший:\nИмя: {booker_name}, Username: {booker_username}')
+        await callback.message.edit_reply_markup(reply_markup=books_kb)
+    await callback.answer()
+
+
 @router.message()
 async def general_handler(msg: Message):
     if msg.chat.type == "private":
         await msg.answer("Чем могу быть полезен?", reply_markup=kb.main_kb)
-
-

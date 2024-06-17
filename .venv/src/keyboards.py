@@ -32,15 +32,21 @@ def books_kb(books, offset):
     return builder
 
 
-def offers_kb(offers):
+def offers_kb(offers, offset):
     builder = InlineKeyboardBuilder()
     for offer in offers:
-        builder.row(InlineKeyboardButton(
-            text=offer[0],
-            callback_data=str(offer[1]))
+        builder.row(
+            InlineKeyboardButton(
+                text='Список броней',
+                callback_data='offerlist_books_' + str(offer[1])
+            ),
+            InlineKeyboardButton(
+                text='Удалить',
+                callback_data='offerlist_delete_' + str(offer[1])
+            )
         )
     builder.row(
-        InlineKeyboardButton(text='Назад', callback_data='go_back'),
-        InlineKeyboardButton(text='Вперёд', callback_data='go_forward')
+        InlineKeyboardButton(text='Назад', callback_data='offerlist_goback_' + str(offset)),
+        InlineKeyboardButton(text='Вперёд', callback_data='offerlist_goforward_' + str(offset))
     )
     return builder
